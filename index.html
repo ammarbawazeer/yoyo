@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TriageAssist</title>
+<meta name="description" content="AI-assisted customer complaint triage prototype – classifies complaints, scores urgency, routes them and drafts a reply for human review.">
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#1b2430;--muted:#5d6b7a;--line:#e1e5ea;--brand:#2156a5;--brand-ink:#fff;
+    --hi:#b42318;--hi-bg:#fde8e7;--md:#9a5b00;--md-bg:#fff2d6;--lo:#1e7a3c;--lo-bg:#e3f5e9;--esc:#6b3fa0;--esc-bg:#f0e9fa}
+  @media (prefers-color-scheme: dark){:root{--bg:#12161c;--card:#1b2129;--ink:#e8edf2;--muted:#9aa7b4;--line:#2c3540;--brand:#6c9ce8;--brand-ink:#0d1117;
+    --hi:#ff8a80;--hi-bg:#3a1d1b;--md:#ffc75f;--md-bg:#3a2e14;--lo:#7ad99a;--lo-bg:#16301f;--esc:#c4a3f0;--esc-bg:#2a2140}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{background:var(--brand);color:var(--brand-ink);padding:18px 16px}
+  header h1{margin:0;font-size:22px} header p{margin:4px 0 0;opacity:.9;font-size:14px}
+  main{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-template-columns:1fr}
+  @media (min-width:900px){main{grid-template-columns:1fr 1fr}.full{grid-column:1/-1}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+  h2{font-size:16px;margin:0 0 12px} label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+  textarea,select,input{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px}
+  textarea{min-height:150px;resize:vertical}
+  .row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
+  button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:6px;padding:8px 12px;cursor:pointer}
+  button.primary{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);font-weight:600}
+  button:disabled{opacity:.5;cursor:default}
+  .samples{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.samples button{font-size:12px;padding:4px 8px}
+  .kv{display:grid;grid-template-columns:150px 1fr;gap:6px 10px;font-size:14px}.kv dt{color:var(--muted)}.kv dd{margin:0}
+  .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:600;font-size:13px}
+  .High{color:var(--hi);background:var(--hi-bg)}.Medium{color:var(--md);background:var(--md-bg)}.Low{color:var(--lo);background:var(--lo-bg)}
+  .esc{color:var(--esc);background:var(--esc-bg)}.ok{color:var(--lo);background:var(--lo-bg)}
+  .bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:4px}.bar i{display:block;height:100%;background:var(--brand)}
+  .flags li{color:var(--hi)} .muted{color:var(--muted);font-size:13px}
+  .reply{white-space:pre-wrap;background:var(--bg);border:1px dashed var(--line);border-radius:6px;padding:10px;font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
+  .tablewrap{overflow-x:auto}
+  .empty{color:var(--muted);text-align:center;padding:30px 0}
+  footer{max-width:1100px;margin:0 auto;padding:0 16px 24px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>TriageAssist</h1>
+  <p>AI-assisted customer complaint triage · classify → prioritise → route → draft reply → human review</p>
+</header>
+<main>
+  <section class="card">
+    <h2>1. New complaint (input)</h2>
+    <label for="text">Complaint text (email / chat / web form)</label>
+    <textarea id="text" placeholder="Paste or type a customer complaint…"></textarea>
+    <div class="samples" id="samples"></div>
+    <div class="row">
+      <div><label for="channel">Channel</label>
+        <select id="channel"><option>Email</option><option>Web form</option><option>Chat</option><option>Social media</option><option>Phone (transcribed)</option></select></div>
+      <div><label for="tier">Customer tier</label>
+        <select id="tier"><option>Standard</option><option>Premium</option></select></div>
+      <div><label for="prior">Previous contacts on this issue</label>
+        <input id="prior" type="number" min="0" max="20" value="0"></div>
+    </div>
+    <p style="margin-top:14px"><button class="primary" id="run">Analyse complaint</button> <button id="clear">Clear</button></p>
+    <p class="muted">Personal data (phone numbers, emails, card numbers) is masked before analysis. All processing happens in your browser; nothing is uploaded.</p>
+  </section>
+
+  <section class="card" id="result">
+    <h2>2. AI triage output</h2>
+    <div class="empty" id="placeholder">Enter a complaint and press <b>Analyse complaint</b>.</div>
+    <div id="out" hidden>
+      <dl class="kv">
+        <dt>Decision</dt><dd id="o-decision"></dd>
+        <dt>Category</dt><dd><b id="o-cat"></b> <span class="muted" id="o-sec"></span></dd>
+        <dt>Confidence</dt><dd><span id="o-conf"></span><div class="bar"><i id="o-confbar"></i></div></dd>
+        <dt>Urgency</dt><dd><span id="o-urg" class="pill"></span> <span class="muted" id="o-prio"></span></dd>
+        <dt>Route to</dt><dd id="o-team"></dd>
+        <dt>Response SLA</dt><dd id="o-sla"></dd>
+        <dt>Why (evidence)</dt><dd id="o-ev"></dd>
+        <dt>Urgency drivers</dt><dd id="o-ur"></dd>
+      </dl>
+      <div id="o-flagwrap" hidden><h2 style="margin-top:14px">Warnings</h2><ul class="flags" id="o-flags"></ul></div>
+      <h2 style="margin-top:14px">Draft acknowledgement (editable)</h2>
+      <textarea id="o-reply" style="min-height:110px"></textarea>
+    </div>
+  </section>
+
+  <section class="card full" id="review">
+    <h2>3. Human review (agent decision)</h2>
+    <p class="muted">The AI only recommends. The support agent accepts, corrects or rejects before anything is sent or assigned.</p>
+    <div class="row">
+      <div><label for="r-cat">Final category</label><select id="r-cat"></select></div>
+      <div><label for="r-urg">Final urgency</label><select id="r-urg"><option>High</option><option>Medium</option><option>Low</option></select></div>
+      <div><label for="r-note">Reviewer note (required when overriding)</label><input id="r-note" placeholder="e.g. Actually a refund request"></div>
+    </div>
+    <p style="margin-top:14px">
+      <button class="primary" id="accept" disabled>Accept &amp; route</button>
+      <button id="override" disabled>Save with override</button>
+      <button id="reject" disabled>Reject → manual handling</button>
+    </p>
+  </section>
+
+  <section class="card full">
+    <h2>4. Decision log (feedback for improving the model)</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Time</th><th>Complaint (masked)</th><th>AI category / urgency</th><th>Conf.</th><th>Final decision</th><th>Action</th><th>Note</th></tr></thead>
+      <tbody id="log"></tbody>
+    </table></div>
+    <p><button id="export">Export log as CSV</button> <button id="wipe">Clear log</button> <span class="muted" id="stats"></span></p>
+  </section>
+</main>
+<footer>Prototype for Assignment 2 – AI Use-Case Design and Feasibility. Engine: rule-based NLP (weighted lexicon, urgency cues, confidence threshold 0.55, escalation rules). See README for method and test cases.</footer>
+
+<script src="triage.js"></script>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const SAMPLES = {
+    "Double charge": "I was charged twice for order #45821. Rs 2,499 was debited two times from my card ending 4417 but I only placed one order. Please reverse the extra payment.",
+    "Late parcel": "My parcel was supposed to arrive last Monday. Tracking still shows 'in transit' and the courier is not answering. When will it be delivered?",
+    "Safety + legal": "The power bank you sent started OVERHEATING and burnt my bag!!! I want a refund immediately and if nobody responds I will go to consumer court.",
+    "Vague": "Not happy. Fix it.",
+    "Rude agent + PII": "The agent on the call centre was very rude and hung up on me. Call me back on 9876543210 or email ravi.k@example.com."
+  };
+  Object.entries(SAMPLES).forEach(([k,v])=>{const b=document.createElement("button");b.textContent=k;b.onclick=()=>{$("text").value=v;};$("samples").appendChild(b);});
+  const cats = Object.keys(TriageAssist.CATEGORIES).concat(["Unclassified"]);
+  cats.forEach(c=>{const o=document.createElement("option");o.textContent=c;$("r-cat").appendChild(o);});
+
+  let current = null, log = [];
+  try { log = JSON.parse(localStorage.getItem("triageLog")||"[]"); } catch(e) { log = []; }
+  const save = () => { try { localStorage.setItem("triageLog", JSON.stringify(log)); } catch(e){} };
+  const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+  $("run").onclick = () => {
+    const text = $("text").value;
+    if (!text.trim()) { $("text").focus(); return; }
+    const r = TriageAssist.triage(text, { tier: $("tier").value, priorContacts: +$("prior").value, channel: $("channel").value });
+    current = { r, input: text, channel: $("channel").value };
+    $("placeholder").hidden = true; $("out").hidden = false;
+    $("o-decision").innerHTML = `<span class="pill ${r.needsHuman ? "esc" : "ok"}">${esc(r.decision)}</span>`;
+    $("o-cat").textContent = r.category;
+    $("o-sec").textContent = r.secondary && r.category !== "Unclassified" ? "(secondary: " + r.secondary + ")" : "";
+    $("o-conf").textContent = Math.round(r.confidence*100) + "%" + (r.confidence < TriageAssist.CONFIDENCE_THRESHOLD ? " – below 55% threshold" : "");
+    $("o-confbar").style.width = Math.round(r.confidence*100) + "%";
+    $("o-urg").textContent = r.urgency; $("o-urg").className = "pill " + r.urgency;
+    $("o-prio").textContent = "priority score " + r.priorityScore + "/100";
+    $("o-team").textContent = r.team; $("o-sla").textContent = r.sla;
+    $("o-ev").textContent = r.evidence.length ? r.evidence.join(", ") : "–";
+    $("o-ur").textContent = r.urgencyReasons.length ? r.urgencyReasons.join("; ") : "none detected";
+    $("o-flags").innerHTML = r.flags.map(f=>`<li>${esc(f)}</li>`).join(""); $("o-flagwrap").hidden = !r.flags.length;
+    $("o-reply").value = r.reply;
+    $("r-cat").value = r.category; $("r-urg").value = r.urgency; $("r-note").value = "";
+    ["accept","override","reject"].forEach(id=>$(id).disabled=false);
+  };
+  $("clear").onclick = () => { $("text").value=""; $("prior").value=0; };
+
+  function record(action) {
+    if (!current) return;
+    const fc = $("r-cat").value, fu = $("r-urg").value, note = $("r-note").value.trim();
+    const changed = fc !== current.r.category || fu !== current.r.urgency;
+    if (action === "Accepted" && changed) action = "Overridden";
+    if (action === "Overridden" && !changed) { alert("Change the final category or urgency to record an override."); return; }
+    if ((action === "Overridden" || action === "Rejected") && !note) { alert("Please add a reviewer note explaining the override/rejection."); $("r-note").focus(); return; }
+    log.unshift({ t: new Date().toLocaleString(), text: current.r.maskedText.slice(0,140), ai: current.r.category + " / " + current.r.urgency,
+      conf: current.r.confidence, final: action === "Rejected" ? "Manual handling" : fc + " / " + fu, action, note });
+    save(); render(); current = null; ["accept","override","reject"].forEach(id=>$(id).disabled=true);
+  }
+  $("accept").onclick = () => record("Accepted");
+  $("override").onclick = () => record("Overridden");
+  $("reject").onclick = () => record("Rejected");
+
+  function render() {
+    $("log").innerHTML = log.length ? log.map(e=>`<tr><td>${esc(e.t)}</td><td>${esc(e.text)}</td><td>${esc(e.ai)}</td><td>${Math.round(e.conf*100)}%</td><td>${esc(e.final)}</td><td>${esc(e.action)}</td><td>${esc(e.note)}</td></tr>`).join("")
+      : `<tr><td colspan="7" class="empty">No reviewed complaints yet.</td></tr>`;
+    const acc = log.filter(e=>e.action==="Accepted").length;
+    $("stats").textContent = log.length ? `Reviewed: ${log.length} · AI accepted unchanged: ${acc} (${Math.round(acc/log.length*100)}%)` : "";
+  }
+  $("export").onclick = () => {
+    const rows = [["time","complaint_masked","ai_output","confidence","final","action","note"]].concat(log.map(e=>[e.t,e.text,e.ai,e.conf,e.final,e.action,e.note]));
+    const csv = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download = "triage_decision_log.csv"; a.click();
+  };
+  $("wipe").onclick = () => { if (confirm("Clear the decision log?")) { log = []; save(); render(); } };
+  render();
+})();
+</script>
+</body>
+</html>

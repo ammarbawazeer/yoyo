@@ -1,0 +1,150 @@
+{
+ "id": "Test 1",
+ "category": "Billing & Payment",
+ "secondary": null,
+ "confidence": 1,
+ "urgency": "Medium",
+ "priority": 52,
+ "team": "Finance Support Desk",
+ "sla": "24 hours",
+ "decision": "Auto-route (agent reviews draft)",
+ "evidence": [
+  "charged twice",
+  "charged",
+  "payment",
+  "card",
+  "debited"
+ ],
+ "urgencyReasons": [
+  "Direct financial loss"
+ ],
+ "flags": []
+}
+{
+ "id": "Test 2",
+ "category": "Delivery & Shipping",
+ "secondary": null,
+ "confidence": 1,
+ "urgency": "Low",
+ "priority": 18,
+ "team": "Logistics Support",
+ "sla": "72 hours",
+ "decision": "Auto-route (agent reviews draft)",
+ "evidence": [
+  "delivered",
+  "courier",
+  "tracking",
+  "parcel",
+  "arrive"
+ ],
+ "urgencyReasons": [
+  "Unresolved previous contact"
+ ],
+ "flags": []
+}
+{
+ "id": "Test 3 (edge: mixed + safety)",
+ "category": "Product Quality & Defect",
+ "secondary": "Refund & Return",
+ "confidence": 0.67,
+ "urgency": "High",
+ "priority": 100,
+ "team": "Product Quality Team + Escalations Supervisor",
+ "sla": "4 working hours",
+ "decision": "Escalate to supervisor (priority)",
+ "evidence": [
+  "overheating",
+  "burnt"
+ ],
+ "urgencyReasons": [
+  "Legal / regulatory threat",
+  "Safety hazard",
+  "Customer states urgency",
+  "Highly emotional tone",
+  "Premium customer"
+ ],
+ "flags": [
+  "Safety / legal / fraud cue – mandatory supervisor review"
+ ]
+}
+{
+ "id": "Test 4 (edge: safety wording)",
+ "category": "Product Quality & Defect",
+ "secondary": "Refund & Return",
+ "confidence": 0.56,
+ "urgency": "High",
+ "priority": 100,
+ "team": "Product Quality Team + Escalations Supervisor",
+ "sla": "4 working hours",
+ "decision": "Escalate to supervisor (priority)",
+ "evidence": [
+  "cracked",
+  "smell"
+ ],
+ "urgencyReasons": [
+  "Safety hazard",
+  "Repeat contact",
+  "2 previous contacts on this issue"
+ ],
+ "flags": [
+  "Safety / legal / fraud cue – mandatory supervisor review"
+ ]
+}
+{
+ "id": "Test 5 (edge: vague/short)",
+ "category": "Unclassified",
+ "secondary": null,
+ "confidence": 0,
+ "urgency": "Low",
+ "priority": 15,
+ "team": "Supervisor triage queue",
+ "sla": "72 hours",
+ "decision": "Escalate to human triage",
+ "evidence": [],
+ "urgencyReasons": [],
+ "flags": [
+  "Too short / insufficient detail",
+  "No clear complaint category detected"
+ ]
+}
+{
+ "id": "Test 6 (edge: non-English)",
+ "category": "Unclassified",
+ "secondary": null,
+ "confidence": 0,
+ "urgency": "Low",
+ "priority": 15,
+ "team": "Supervisor triage queue",
+ "sla": "72 hours",
+ "decision": "Escalate to human triage",
+ "evidence": [],
+ "urgencyReasons": [],
+ "flags": [
+  "Too short / insufficient detail",
+  "Possibly non-English text – outside model scope",
+  "No clear complaint category detected"
+ ]
+}
+{
+ "id": "Test 7 (PII + repeat contact)",
+ "category": "Customer Service & Staff",
+ "secondary": null,
+ "confidence": 1,
+ "urgency": "Medium",
+ "priority": 49,
+ "team": "Customer Experience Lead",
+ "sla": "24 hours",
+ "decision": "Auto-route (agent reviews draft)",
+ "evidence": [
+  "rude",
+  "agent",
+  "hung up",
+  "call centre"
+ ],
+ "urgencyReasons": [
+  "2 previous contacts on this issue"
+ ],
+ "flags": [
+  "PII detected and masked: email, phone"
+ ]
+}

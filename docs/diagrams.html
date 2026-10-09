@@ -1,0 +1,54 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{font:14px/1.3 Arial,sans-serif;margin:0;background:#fff;color:#1b2430}
+.d{padding:18px;width:1100px}
+h3{margin:0 0 12px;font-size:16px}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:0}
+.box{border:2px solid #555;border-radius:8px;padding:8px 10px;width:150px;text-align:center;background:#f4f6f8}
+.box b{display:block;font-size:11px;letter-spacing:.5px;color:#555;margin-bottom:3px}
+.ar{align-self:center;font-size:22px;padding:0 4px;color:#555}
+.data{background:#e6f0fb;border-color:#2156a5}.ai{background:#efe6fa;border-color:#6b3fa0}.hum{background:#e3f5e9;border-color:#1e7a3c}
+.dec{background:#fff2d6;border-color:#9a5b00}.out{background:#f4f6f8;border-color:#333}.fail{background:#fde8e7;border-color:#b42318}
+.row{display:flex;align-items:center;margin-bottom:10px}
+.pain{margin-top:10px;font-size:12.5px;color:#b42318}
+.legend{margin-top:12px;font-size:12px;display:flex;gap:14px}
+.legend span{display:inline-block;width:12px;height:12px;border:2px solid;vertical-align:middle;margin-right:4px}
+.branch{margin-top:6px;display:flex;gap:16px;font-size:12.5px}
+.branch .box{width:auto;text-align:left}
+</style></head><body>
+<div class="d" id="current">
+<h3>B1. Current workflow – manual complaint triage</h3>
+<div class="row">
+<div class="box data"><b>TRIGGER / INPUT</b>Complaint arrives by email, web form, chat, social media or phone</div><div class="ar">→</div>
+<div class="box hum"><b>HUMAN</b>Level-1 agent opens shared inbox in arrival (FIFO) order</div><div class="ar">→</div>
+<div class="box hum"><b>HUMAN</b>Agent reads full text, checks order history manually</div><div class="ar">→</div>
+<div class="box dec"><b>DECISION</b>Agent judges category &amp; urgency from experience (no fixed rules)</div><div class="ar">→</div>
+<div class="box hum"><b>HUMAN</b>Forwards to team by email / ticket tag; types reply from scratch</div><div class="ar">→</div>
+<div class="box out"><b>OUTPUT</b>Ticket assigned; customer waits for resolution</div>
+</div>
+<div class="branch"><div class="box fail"><b>FAILURE PATHS</b>Wrong team → ticket bounced back &amp; re-routed · Urgent safety/legal cases wait in FIFO queue · Customer chases again (repeat contact) · No record of why a ticket was routed</div></div>
+<div class="pain">Pain points: slow first response, inconsistent categorisation between agents, misrouting, urgent cases not prioritised, no data for improvement.</div>
+</div>
+
+<div class="d" id="proposed">
+<h3>B2. Proposed AI-enabled workflow – TriageAssist</h3>
+<div class="row">
+<div class="box data"><b>1 INPUT</b>Complaint text + channel, customer tier, prior contacts</div><div class="ar">→</div>
+<div class="box data"><b>2 DATA PREP</b>Mask PII (phone, email, card), normalise text</div><div class="ar">→</div>
+<div class="box ai"><b>3 AI PROCESSING</b>Classify category, score urgency, compute confidence</div><div class="ar">→</div>
+<div class="box ai"><b>4 AI OUTPUT</b>Category, urgency, team, SLA, evidence, draft reply</div><div class="ar">→</div>
+<div class="box dec"><b>5 VALIDATION CHECK</b>Confidence ≥ 55%? No safety / legal / fraud cue? Enough detail? English?</div>
+</div>
+<div class="row" style="margin-left:40px">
+<div class="box dec" style="width:130px"><b>IF YES</b>Auto-route recommendation</div><div class="ar">→</div>
+<div class="box hum"><b>6 HUMAN REVIEW</b>L1 agent accepts, overrides (with note) or rejects</div><div class="ar">→</div>
+<div class="box out"><b>7 DECISION / ACTION</b>Ticket routed to team; personalised reply sent</div><div class="ar">→</div>
+<div class="box data"><b>8 RECORD / FEEDBACK</b>Decision log (AI vs final) → monthly lexicon &amp; threshold tuning</div>
+</div>
+<div class="row" style="margin-left:40px">
+<div class="box fail" style="width:130px"><b>IF NO</b>Escalate</div><div class="ar">→</div>
+<div class="box fail" style="width:300px"><b>ESCALATION PATH</b>Low confidence / mixed issue / vague / non-English → Supervisor triage queue. Safety, legal, fraud, security → Escalations Supervisor within 4 working hours.</div><div class="ar">→</div>
+<div class="box hum"><b>HUMAN</b>Supervisor decides &amp; assigns manually</div><div class="ar">→</div><div class="box data" style="width:110px"><b>BACK TO 8</b>Logged for feedback</div>
+</div>
+<div class="legend"><div><span style="border-color:#2156a5;background:#e6f0fb"></span>Data</div><div><span style="border-color:#6b3fa0;background:#efe6fa"></span>AI activity</div><div><span style="border-color:#1e7a3c;background:#e3f5e9"></span>Human activity</div><div><span style="border-color:#9a5b00;background:#fff2d6"></span>Decision point</div><div><span style="border-color:#b42318;background:#fde8e7"></span>Failure / escalation</div><div><span style="border-color:#333;background:#f4f6f8"></span>Output</div></div>
+</div>
+</body></html>
